@@ -37,3 +37,50 @@ class DeleteConfirmationDialog extends StatelessWidget {
     );
   }
 }
+
+class ImageSelectDialog extends StatelessWidget {
+  final Function onCameraSelect;
+  final Function onGalerySelect;
+  final String dialogTitle;
+  final String dialogContent;
+
+  const ImageSelectDialog(
+      {super.key,
+      required this.onCameraSelect,
+      required this.onGalerySelect,
+      required this.dialogTitle,
+      required this.dialogContent});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(dialogTitle),
+      content: Text(dialogContent),
+      actions: <Widget>[
+        TextButton.icon(
+          icon: const Icon(Icons.camera),
+          onPressed: () {
+            onCameraSelect();
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          label: const Text('Usar a camera para fotografar'),
+        ),
+        TextButton.icon(
+          icon: const Icon(Icons.browse_gallery),
+          onPressed: () {
+            onGalerySelect();
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          label: const Text('Selecionar imagem da Galeria'),
+        ),
+        TextButton.icon(
+          icon: const Icon(Icons.cancel),
+          onPressed: () {
+            Navigator.of(context).pop(); // Close the dialog
+          },
+          label: const Text('Fechar'),
+        ),
+      ],
+    );
+  }
+}

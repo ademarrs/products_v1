@@ -6,7 +6,10 @@ import 'package:products/services/auth_service.dart';
 import 'package:products/utils/csv_utils.dart';
 import 'package:products/utils/replace_accents.dart';
 import 'package:products/utils/show_dialogs.dart';
+//import 'package:products/utils/show_product_image.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+//import 'package:standard_dialogs/widgets/await_dialog.dart';
 
 class ProductHomePage extends StatefulWidget {
   const ProductHomePage({Key? key}) : super(key: key);
@@ -19,6 +22,7 @@ class _HomePageState extends State<ProductHomePage> {
   //final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _searchController = TextEditingController();
+  late XFile? imageXFile;
 
   // esse campo filter, será digitado pelo usuario para filtrar os produtos
   String filter = '';
@@ -112,42 +116,6 @@ class _HomePageState extends State<ProductHomePage> {
     );
   }
 
-  editButton(DocumentSnapshot documentSnapshot, AuthService auth) {
-    return IconButton(
-        icon: Icon(auth.typeUser == 'admin' ? Icons.edit : null),
-        tooltip: auth.typeUser == 'admin' ? 'Alterar o item' : '',
-        onPressed: auth.typeUser != 'admin'
-            ? null
-            : () {
-                createOrUpdateProduct(
-                    context, auth.usuario!.email, documentSnapshot);
-              });
-  }
-
-  deleteButton(DocumentSnapshot documentSnapshot, AuthService auth) {
-    return IconButton(
-      icon: Icon(auth.typeUser == 'admin' ? Icons.delete : null),
-      tooltip: auth.typeUser == 'admin' ? 'Excluir o item' : '',
-      onPressed: auth.typeUser != 'admin'
-          ? null
-          : () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return DeleteConfirmationDialog(
-                    dialogTitle: 'Exclusão',
-                    dialogContent:
-                        'Confirma a exclusão do item ${documentSnapshot['name']}?',
-                    onDeleteConfirmed: () {
-                      callDeleteProduct(context, documentSnapshot);
-                    },
-                  );
-                },
-              );
-            },
-    );
-  }
-
   myBodyBuild(AuthService auth) {
     return StreamBuilder(
       stream: productss
@@ -179,13 +147,19 @@ class _HomePageState extends State<ProductHomePage> {
                   title: Text(
                       '${documentSnapshot['name']}  - Saldo: ${documentSnapshot['balance']}'),
                   subtitle: Text(documentSnapshot['detailed_name']),
-                  trailing: SizedBox(
-                    width: 100,
-                    child: Row(children: [
-                      editButton(documentSnapshot, auth),
-                      deleteButton(documentSnapshot, auth),
-                    ]),
-                  ),
+                  leading: showProductSmallImage(), // imagem do lado esquerdo
+                  trailing:
+                      (auth.typeUser != 'admin') // icones do lado diretiro
+                          ? null
+                          : SizedBox(
+                              width: 144,
+                              height: 200,
+                              child: Row(children: [
+                                editButton(documentSnapshot, auth),
+                                cameraButton(documentSnapshot, auth),
+                                deleteButton(documentSnapshot, auth),
+                              ]),
+                            ),
                 ),
               );
             },
@@ -213,6 +187,138 @@ class _HomePageState extends State<ProductHomePage> {
               child: const Icon(Icons.add),
             ),
       //}
+    );
+  }
+
+  editButton(DocumentSnapshot documentSnapshot, AuthService auth) {
+    return IconButton(
+        icon: const Icon(Icons.edit),
+        tooltip: 'Alterar o item',
+        onPressed: () {
+          createOrUpdateProduct(context, auth.usuario!.email, documentSnapshot);
+        });
+  }
+
+  cameraButton(
+    DocumentSnapshot<Object?> documentSnapshot,
+    AuthService auth,
+  ) {
+    return IconButton(
+      icon: const Icon(Icons.camera_alt_outlined),
+      tooltip: 'Imagem do Item',
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return SimpleDialog(
+              title: const Text(
+                "Adicionar imagem ao item",
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+              children: [
+                SimpleDialogOption(
+                  onPressed: () {
+                    captureImageWithCamera(context);
+                  },
+                  child: const Text(
+                    "Capturar imagem com a câmera",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                SimpleDialogOption(
+                  onPressed: () {
+                    pickImageFromGallery(context);
+                  },
+                  child: const Text(
+                    "Selecionar imagem da galeria",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
+                SimpleDialogOption(
+                  child: const Text(
+                    "Cancelar",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  deleteButton(DocumentSnapshot documentSnapshot, AuthService auth) {
+    return IconButton(
+      icon: Icon(Icons.delete),
+      tooltip: 'Excluir o item',
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return DeleteConfirmationDialog(
+              dialogTitle: 'Exclusão',
+              dialogContent:
+                  'Confirma a exclusão do item ${documentSnapshot['name']}?',
+              onDeleteConfirmed: () {
+                callDeleteProduct(context, documentSnapshot);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> captureImageWithCamera(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+
+    Navigator.pop(context);
+    XFile? capturedImage = await picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1280,
+      maxHeight: 720,
+      imageQuality: 80,
+    );
+
+    if (capturedImage != null) {
+      setState(() {
+        imageXFile = capturedImage;
+      });
+    }
+  }
+
+  Future<void> pickImageFromGallery(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+
+    Navigator.pop(context);
+    XFile? capturedImage = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1280,
+      maxHeight: 720,
+      imageQuality: 80,
+    );
+
+    if (capturedImage != null) {
+      setState(() {
+        imageXFile = capturedImage;
+      });
+    }
+  }
+
+  showProductSmallImage() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: SizedBox(
+        width: 90,
+        height: 90,
+        child: ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: Image.asset('images/Splash.png', fit: BoxFit.cover)),
+        // Image(image: FileImage(File(imageXFile!.path)))
+      ),
     );
   }
 }

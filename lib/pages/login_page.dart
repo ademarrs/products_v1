@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
   String titulo = 'Bem Vindo';
   String actionButton = 'Login';
-  String troggleButton = 'Para fazer aleraçãoes nos dados faça login';
+  String troggleButton = 'Para fazer alteraçãoes nos dados faça login';
 
   @override
   void initState() {
