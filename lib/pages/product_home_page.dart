@@ -92,19 +92,23 @@ class _HomePageState extends State<ProductHomePage> {
         PopupMenuButton(
             itemBuilder: (_) => [
                   PopupMenuItem(
-                    child: ListTile(
-                      leading: const Icon(Icons.file_open),
-                      title: const Text('Carregar CSV'),
-                      onTap: () {
-                        _handleOpenCSVClick();
-                        Navigator.pop(context);
-                      },
-                    ),
+                    child: (auth.typeUser != 'admin')
+                        ? null
+                        : ListTile(
+                            leading: const Icon(Icons.file_open),
+                            title: const Text('Carregar CSV'),
+                            onTap: () {
+                              _handleOpenCSVClick();
+                              Navigator.pop(context);
+                            },
+                          ),
                   ),
                   PopupMenuItem(
                     child: ListTile(
                       leading: const Icon(Icons.exit_to_app),
-                      title: const Text('Logout'),
+                      title: (auth.typeUser == 'admin')
+                          ? const Text('Logout')
+                          : const Text('Login'),
                       onTap: () {
                         Navigator.pop(context);
                         auth.logout();
@@ -252,7 +256,7 @@ class _HomePageState extends State<ProductHomePage> {
 
   deleteButton(DocumentSnapshot documentSnapshot, AuthService auth) {
     return IconButton(
-      icon: Icon(Icons.delete),
+      icon: const Icon(Icons.delete),
       tooltip: 'Excluir o item',
       onPressed: () {
         showDialog(

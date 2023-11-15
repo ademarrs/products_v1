@@ -81,7 +81,12 @@ class AuthService extends ChangeNotifier {
   }
 
   logout() async {
-    await _auth.signOut();
+    if (typeUser == 'guest') {
+      await _auth.signOut();
+    } else {
+      usuario!.email!.startsWith('guest');
+      typeUser = 'guest';
+    }
     notifyListeners();
   }
 }
